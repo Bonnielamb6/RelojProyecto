@@ -4,10 +4,13 @@ import java.awt.image.BufferedImage;
 import java.util.Calendar;
 
 public class Ventana extends JPanel implements Runnable {
-//    private final BufferedImage puerroSegundos;
-    private BufferedImage puerroMinutos;
-    private BufferedImage puerroHoras;
-    private BufferedImage fondo;
+    private final BufferedImage puerroSegundos;
+    private final BufferedImage puerroMinutos;
+    private final BufferedImage puerroHoras;
+    private final BufferedImage fondo;
+    private BufferedImage rotatedMinutos;
+    private BufferedImage rotatedHoras;
+    private BufferedImage rotatedSegundos;
     private int hora;
     private int min;
     private int sec;
@@ -17,37 +20,46 @@ public class Ventana extends JPanel implements Runnable {
         Dimension dimension = new Dimension(1000, 1000);
         setPreferredSize(dimension);
 
-
+        hora = Calendar.HOUR;
+        min = Calendar.MINUTE;
+        sec = Calendar.SECOND;
         //Fondo del reloj
         fondo = new BufferedImage(1000, 1000, BufferedImage.TYPE_INT_ARGB);
         Graphics gfondo = fondo.getGraphics();
-        ImageIcon iconoRelojFondo = new ImageIcon(getClass().getResource("img/clock_hatsune_miku.jpg"));
+        ImageIcon iconoRelojFondo = new ImageIcon(getClass().getResource("img/clock_hatsune_miku.png"));
         Image img = iconoRelojFondo.getImage();
-        gfondo.drawImage(img, 100, 60, 800, 800, null);
+        gfondo.drawImage(img, 0, -50, 1000, 1000, null);
         gfondo.dispose();
 
         //Minutero del reloj
-        puerroMinutos = new BufferedImage(550, 207, BufferedImage.TYPE_INT_ARGB);
+        puerroMinutos = new BufferedImage(467, 350, BufferedImage.TYPE_INT_ARGB);
         Graphics gMinutos = puerroMinutos.getGraphics();
-        ImageIcon iconoMinutos = new ImageIcon(getClass().getResource("img/hatsune_miku_leek_minutos.png"));
+        ImageIcon iconoMinutos = new ImageIcon(getClass().getResource("img/leek_minutos.png"));
         Image imgMinutos = iconoMinutos.getImage();
-        gMinutos.drawImage(imgMinutos, 0, 0, 550, 207, null);
+        gMinutos.drawImage(imgMinutos, 0, 0, 467, 350, null);
         gMinutos.dispose();
-        if(imgMinutos ==null){
-            System.out.println("null");
-        }
+
 
         //Horario del reloj
-        puerroHoras = new BufferedImage(350, 200, BufferedImage.TYPE_INT_ARGB);
+        puerroHoras = new BufferedImage(276, 207, BufferedImage.TYPE_INT_ARGB);
         Graphics gHoras = puerroHoras.getGraphics();
-        ImageIcon iconoHoras = new ImageIcon(getClass().getResource("img/hatsune_miku_leek.png"));
-        Image imgHoras = iconoHoras.getImage();
-        if(imgHoras ==null){
-            System.out.println("null2");
-        }
-        gHoras.drawImage(imgHoras, 0, 0, 350, 200, null);
+        ImageIcon iconoHoras = new ImageIcon(getClass().getResource("img/leek_horas.png"));
+        Image imgHoras = iconoHoras.getImage();    //350       200
+        gHoras.drawImage(imgHoras, 0, 0, 276, 207, null);
         gHoras.dispose();
 
+        //Segundero del reloj
+        puerroSegundos = new BufferedImage(960,720,BufferedImage.TYPE_INT_ARGB);
+        Graphics gSegundos = puerroSegundos.getGraphics();
+        ImageIcon iconoSegundos = new ImageIcon(getClass().getResource("img/leek.png"));
+        Image imgSegundos = iconoSegundos.getImage();
+        gSegundos.drawImage(imgSegundos,0,0,960,720,null);
+        gSegundos.dispose();
+
+        //Asignacion de los buffers
+        rotatedMinutos = puerroMinutos;
+        rotatedHoras = puerroHoras;
+        rotatedSegundos = puerroSegundos;
         //Segundero del reloj
         initComponents();
         Thread hilo = new Thread(this);
@@ -58,10 +70,7 @@ public class Ventana extends JPanel implements Runnable {
 
 
     private void initComponents() {
-
-
         this.setLayout(null);
-
         JLabel lblTitulo = new JLabel("RELOJ ANALOGICO");
         lblTitulo.setBounds(420, 0, 200, 50);
         lblTitulo.setFont(new Font("arial", Font.PLAIN, 20));
@@ -85,42 +94,47 @@ public class Ventana extends JPanel implements Runnable {
     @Override
     public void paint(Graphics g) {
         super.paint(g);
-
         g.drawImage(fondo, 0, 0, null);
-        g.drawImage(puerroMinutos, 155, 267, null);
-        g.drawImage(puerroHoras, 290, 300, null);
-
+        update(g);
     }
 
     @Override
     public void update(Graphics g) {
-        paint(g);
+        Calendar cal = Calendar.getInstance();
+        if (cal.get(Calendar.SECOND) != sec) {
+            hora = cal.get(Calendar.HOUR);
+            min = cal.get(Calendar.MINUTE);
+            sec = cal.get(Calendar.SECOND);
 
-        //g.setClip(0, 0, getWidth(), getHeight());
-        //Calendar cal = Calendar.getInstance();
-        //if (cal.get(Calendar.MINUTE) != min) {
-        //    hora = cal.get(Calendar.HOUR);
-        //    min = cal.get(Calendar.MINUTE);
+            rotatedMinutos = rotateImage(puerroMinutos, sec );
+            rotatedHoras = rotateImage(puerroHoras, min);
+            //redibujar el fondo y los puerros de la manera que se necesiten dependiendo de la hora
+            //y el minuto en el que se encuentra el reloj de mi pc
 
-        //redibujar el fondo y los puerros de la manera que se necesiten dependiendo de la hora
-        //y el minuto en el que se encuentra el reloj de mi pc
+        }
+        g.drawImage(fondo, 0, 0, null);
 
-        //}
+
+
+
+        g.setClip(0, 0, getWidth(), getHeight());
+
+
         //pintar el buffer
 
 
         //pintar el ente movil
+        g.drawImage(rotatedSegundos, 10, 80, null);
+        g.drawImage(rotatedMinutos, 255, 267, null);
+        g.drawImage(rotatedHoras, 350, 335, null);
     }
 
     @Override
     public void run() {
-        Graphics2D g2 = (Graphics2D) puerroHoras.getGraphics();
-        Graphics2D g4 = (Graphics2D) fondo.getGraphics();
-        Graphics2D g3 = (Graphics2D) puerroMinutos.getGraphics();
-
         while (true) {
-
-
+            Graphics2D g2 = (Graphics2D) puerroHoras.getGraphics();
+            //Graphics2D g4 = (Graphics2D) fondo.getGraphics();
+            //Graphics2D g3 = (Graphics2D) puerroMinutos.getGraphics();
 
             try {
                 Thread.sleep(1000);
@@ -130,6 +144,18 @@ public class Ventana extends JPanel implements Runnable {
 
             repaint();
         }
+    }
+
+    private BufferedImage rotateImage (BufferedImage img, double angulo){
+        int width = img.getWidth();
+        int height = img.getHeight();
+
+        BufferedImage rotatedImage = new BufferedImage(width,height,img.getType());
+        Graphics2D g2d = rotatedImage.createGraphics();
+        g2d.rotate(Math.toRadians(angulo),width/2,height/2);
+        g2d.drawImage(img,null,0,0);
+        g2d.dispose();
+        return rotatedImage;
     }
 
     public static void main(String[] args) {
