@@ -23,6 +23,7 @@ public class Ventana extends JPanel implements Runnable {
         hora = Calendar.HOUR;
         min = Calendar.MINUTE;
         sec = Calendar.SECOND;
+
         //Fondo del reloj
         fondo = new BufferedImage(1000, 1000, BufferedImage.TYPE_INT_ARGB);
         Graphics gfondo = fondo.getGraphics();
@@ -38,7 +39,6 @@ public class Ventana extends JPanel implements Runnable {
         Image imgMinutos = iconoMinutos.getImage();
         gMinutos.drawImage(imgMinutos, 0, 0, 467, 350, null);
         gMinutos.dispose();
-
 
         //Horario del reloj
         puerroHoras = new BufferedImage(276, 207, BufferedImage.TYPE_INT_ARGB);
@@ -60,7 +60,7 @@ public class Ventana extends JPanel implements Runnable {
         rotatedMinutos = puerroMinutos;
         rotatedHoras = puerroHoras;
         rotatedSegundos = puerroSegundos;
-        //Segundero del reloj
+
         initComponents();
         Thread hilo = new Thread(this);
         hilo.start();
@@ -106,8 +106,8 @@ public class Ventana extends JPanel implements Runnable {
             min = cal.get(Calendar.MINUTE);
             sec = cal.get(Calendar.SECOND);
 
-            rotatedMinutos = rotateImage(puerroMinutos, sec );
-            rotatedHoras = rotateImage(puerroHoras, min);
+            rotatedMinutos = rotateImage(puerroMinutos, min*360/60);
+            rotatedHoras = rotateImage(puerroHoras, hora*360/12);
             //redibujar el fondo y los puerros de la manera que se necesiten dependiendo de la hora
             //y el minuto en el que se encuentra el reloj de mi pc
 
@@ -124,6 +124,7 @@ public class Ventana extends JPanel implements Runnable {
 
 
         //pintar el ente movil
+        rotatedSegundos = rotateImage(puerroSegundos,sec*360/60);
         g.drawImage(rotatedSegundos, 10, 80, null);
         g.drawImage(rotatedMinutos, 255, 267, null);
         g.drawImage(rotatedHoras, 350, 335, null);
