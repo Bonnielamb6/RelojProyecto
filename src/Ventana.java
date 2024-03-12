@@ -1,6 +1,8 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.time.LocalDateTime;
+import java.time.temporal.TemporalField;
 import java.util.Calendar;
 
 public class Ventana extends JPanel implements Runnable {
@@ -11,18 +13,18 @@ public class Ventana extends JPanel implements Runnable {
     private BufferedImage rotatedMinutos;
     private BufferedImage rotatedHoras;
     private BufferedImage rotatedSegundos;
-    private int hora;
-    private int min;
-    private int sec;
+    private int hora = -1;
+    private int min = -1;
+    private int sec = -1;
+
+    private int millis = -10;
+    private int prevMinChange = -10;
+    private int prevHourChange = -5;
 
 
     public Ventana() {
         Dimension dimension = new Dimension(1000, 1000);
         setPreferredSize(dimension);
-
-        hora = Calendar.HOUR;
-        min = Calendar.MINUTE;
-        sec = Calendar.SECOND;
 
         //Fondo del reloj
         fondo = new BufferedImage(1000, 1000, BufferedImage.TYPE_INT_ARGB);
@@ -49,11 +51,11 @@ public class Ventana extends JPanel implements Runnable {
         gHoras.dispose();
 
         //Segundero del reloj
-        puerroSegundos = new BufferedImage(960,720,BufferedImage.TYPE_INT_ARGB);
+        puerroSegundos = new BufferedImage(960, 720, BufferedImage.TYPE_INT_ARGB);
         Graphics gSegundos = puerroSegundos.getGraphics();
         ImageIcon iconoSegundos = new ImageIcon(getClass().getResource("img/leek.png"));
         Image imgSegundos = iconoSegundos.getImage();
-        gSegundos.drawImage(imgSegundos,0,0,960,720,null);
+        gSegundos.drawImage(imgSegundos, 0, 0, 960, 720, null);
         gSegundos.dispose();
 
         //Asignacion de los buffers
@@ -64,8 +66,6 @@ public class Ventana extends JPanel implements Runnable {
         initComponents();
         Thread hilo = new Thread(this);
         hilo.start();
-
-
     }
 
 
@@ -100,22 +100,53 @@ public class Ventana extends JPanel implements Runnable {
 
     @Override
     public void update(Graphics g) {
-        Calendar cal = Calendar.getInstance();
-        if (cal.get(Calendar.SECOND) != sec) {
-            hora = cal.get(Calendar.HOUR);
-            min = cal.get(Calendar.MINUTE);
-            sec = cal.get(Calendar.SECOND);
+        LocalDateTime time = LocalDateTime.now();
+        Calendar calendar = Calendar.getInstance();
+        sec = calendar.get(Calendar.SECOND);
+        min = calendar.get(Calendar.MINUTE);
+        hora = calendar.get(Calendar.HOUR);
+        int currentMiliseconds = calendar.get(Calendar.MILLISECOND);
 
-            rotatedMinutos = rotateImage(puerroMinutos, min*360/60);
-            rotatedHoras = rotateImage(puerroHoras, hora*360/12);
-            //redibujar el fondo y los puerros de la manera que se necesiten dependiendo de la hora
-            //y el minuto en el que se encuentra el reloj de mi pc
+
+        if (sec != Calendar.SECOND) {
+            millis = -1;
+            rotatedMinutos = rotateImage(puerroMinutos, (double) min * 360 / 60 + (double) (sec / 10));
+            rotatedHoras = rotateImage(puerroHoras, (double) hora * 360 / 12 + (double) (min / 2));
+        }
+                                        //166
+        if (currentMiliseconds > millis + 166) {
+            double fractionOfSecond = (double) currentMiliseconds / 1000.0;
+            double secondsAngle = (double) sec * 360.0 / 60.0 + fractionOfSecond * 6.0; // 360° / 60 segundos = 6° por segundo
+            rotatedSegundos = rotateImage(puerroSegundos, secondsAngle);
 
         }
+
+
+//        if(currentSecond >= prevMinChange + 10 || currentSecond == 59){
+//            System.out.println("Cambia minuto");
+//            if(currentSecond != 59){
+//                prevMinChange  = (currentSecond / 10) * 10;
+//            } else {
+//                prevMinChange = -10;
+//            }
+//
+//            rotatedMinutos = rotateImage(puerroMinutos, (double) (min * 360) /60+((double) prevMinChange /10));
+//        }
+//
+//        if(currentHour != hora){
+//            hora = currentHour;
+//        }
+//        if(currentMinute >= prevHourChange + 2 || currentMinute == 59){
+//            System.out.println("Cambia hora");
+//            if(currentMinute != 59){
+//                prevHourChange  = (currentMinute / 2) * 2;
+//            } else {
+//                prevHourChange = -5;
+//            }
+//
+//            rotatedHoras = rotateImage(puerroHoras, (double) (hora * 360) /12+((double) prevHourChange /2));
+//        }
         g.drawImage(fondo, 0, 0, null);
-
-
-
 
         g.setClip(0, 0, getWidth(), getHeight());
 
@@ -124,21 +155,27 @@ public class Ventana extends JPanel implements Runnable {
 
 
         //pintar el ente movil
-        rotatedSegundos = rotateImage(puerroSegundos,sec*360/60);
         g.drawImage(rotatedSegundos, 10, 80, null);
         g.drawImage(rotatedMinutos, 255, 267, null);
         g.drawImage(rotatedHoras, 350, 335, null);
+        if (sec % 2 == 0) {
+            //tocar cancion donde es mi
+
+        } else {
+            //tocar cancion donde es ku
+
+        }
     }
 
     @Override
     public void run() {
         while (true) {
-            Graphics2D g2 = (Graphics2D) puerroHoras.getGraphics();
+            //Graphics2D g2 = (Graphics2D) puerroHoras.getGraphics();
             //Graphics2D g4 = (Graphics2D) fondo.getGraphics();
             //Graphics2D g3 = (Graphics2D) puerroMinutos.getGraphics();
 
             try {
-                Thread.sleep(1000);
+                Thread.sleep(16);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -147,14 +184,14 @@ public class Ventana extends JPanel implements Runnable {
         }
     }
 
-    private BufferedImage rotateImage (BufferedImage img, double angulo){
+    private BufferedImage rotateImage(BufferedImage img, double angulo) {
         int width = img.getWidth();
         int height = img.getHeight();
 
-        BufferedImage rotatedImage = new BufferedImage(width,height,img.getType());
+        BufferedImage rotatedImage = new BufferedImage(width, height, img.getType());
         Graphics2D g2d = rotatedImage.createGraphics();
-        g2d.rotate(Math.toRadians(angulo),width/2,height/2);
-        g2d.drawImage(img,null,0,0);
+        g2d.rotate(Math.toRadians(angulo), width / 2, height / 2);
+        g2d.drawImage(img, null, 0, 0);
         g2d.dispose();
         return rotatedImage;
     }
