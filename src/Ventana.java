@@ -1,14 +1,16 @@
+import javax.sound.sampled.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.time.LocalDateTime;
 import java.time.temporal.TemporalField;
 import java.util.Calendar;
+
 /*
-*TODO
-* implementar la fecha en un jlabel
-* implementar los numeros del reloj
-* */
+ *TODO
+ * implementar la fecha en un jlabel
+ * implementar los numeros del reloj
+ * */
 public class Ventana extends JPanel implements Runnable {
     private final BufferedImage puerroSegundos;
     private final BufferedImage puerroMinutos;
@@ -18,12 +20,11 @@ public class Ventana extends JPanel implements Runnable {
     private BufferedImage rotatedHoras;
     private BufferedImage rotatedSegundos;
     private int hora = -1;
+    private int horaAnterior;
+    private int minutoAnterior;
     private int min = -1;
     private int sec = -1;
-
     private int millis = -10;
-    private int prevMinChange = -10;
-    private int prevHourChange = -5;
     private int dia;
     private int mes;
     private int anio;
@@ -36,6 +37,8 @@ public class Ventana extends JPanel implements Runnable {
         dia = calendar.get(Calendar.DAY_OF_MONTH);
         mes = calendar.get(Calendar.MONTH);
         anio = calendar.get(Calendar.YEAR);
+        minutoAnterior = -1;
+        horaAnterior = -1;
         //Fondo del reloj
 
         fondo = new BufferedImage(1000, 1000, BufferedImage.TYPE_INT_ARGB);
@@ -46,34 +49,34 @@ public class Ventana extends JPanel implements Runnable {
         gfondo.drawImage(img, 0, -50, 1000, 1000, null);
         Font fuente = new Font(gfondo.getFont().getName(), Font.PLAIN, 50);
         gfondo.setFont(fuente);
-        gfondo.drawString("12",465,130);
-        gfondo.drawString("3",490+320,130+330);
-        gfondo.drawString("6",480,800);
-        gfondo.drawString("9",490-330,130+330);
+        gfondo.drawString("12", 465, 130);
+        gfondo.drawString("3", 490 + 320, 130 + 330);
+        gfondo.drawString("6", 480, 800);
+        gfondo.drawString("9", 490 - 330, 130 + 330);
         gfondo.setStroke(new BasicStroke(10));
         //TODO dibujar las lineas en cada hora correctamente
         //linea de la 1
         //gfondo.drawLine(620,180,650,140);
-        gfondo.drawString("1",640,175);
+        gfondo.drawString("1", 640, 175);
         //linea de las 2
-        gfondo.drawString("2",765,285);
+        gfondo.drawString("2", 765, 285);
         //linea de las 4
-        gfondo.drawString("4",760,640);
+        gfondo.drawString("4", 760, 640);
         //linea de las 5
-        gfondo.drawString("5",640,745);
+        gfondo.drawString("5", 640, 745);
         //linea de las 7
-        gfondo.drawString("7",320,735);
+        gfondo.drawString("7", 320, 735);
         //linea de las 8
-        gfondo.drawString("8",200,625);
+        gfondo.drawString("8", 200, 625);
         //linea de las 10
-        gfondo.drawString("10",185,290);
+        gfondo.drawString("10", 185, 290);
         //linea de las 11
-        gfondo.drawString("11",295,175);
+        gfondo.drawString("11", 295, 175);
         gfondo.setColor(Color.BLACK);
-        gfondo.fillRect(400,580,200,50);
+        gfondo.fillRect(400, 580, 200, 50);
         gfondo.setColor(Color.WHITE);
         gfondo.setFont(fuente = new Font(gfondo.getFont().getName(), Font.PLAIN, 30));
-        gfondo.drawString(""+dia+"/"+mes+"/"+anio,435,615);
+        gfondo.drawString("" + dia + "/" + mes + "/" + anio, 435, 615);
         gfondo.dispose();
 
         //Minutero del reloj
@@ -117,20 +120,6 @@ public class Ventana extends JPanel implements Runnable {
         lblTitulo.setBounds(420, 0, 200, 50);
         lblTitulo.setFont(new Font("arial", Font.PLAIN, 20));
         this.add(lblTitulo);
-
-
-//        ImageIcon iconoHoras = new ImageIcon(getClass().getResource("img/hatsune_miku_leek.png"));
-//        JLabel imgHoras = new JLabel(iconoHoras);
-//        imgHoras.setBounds(290, 300, 350, 200);
-//        this.add(imgHoras);
-//
-//        this.setComponentZOrder(imgHoras, 0);
-
-//        ImageIcon iconoMinutos = new ImageIcon(getClass().getResource("img/hatsune_miku_leek_minutos.png"));
-//        JLabel imgMinutos = new JLabel(iconoMinutos);
-//        imgMinutos.setBounds(155, 267, 550, 207);
-//        this.add(imgMinutos);
-//        this.setComponentZOrder(imgMinutos, 0);
     }
 
     @Override
@@ -148,6 +137,11 @@ public class Ventana extends JPanel implements Runnable {
         min = calendar.get(Calendar.MINUTE);
         hora = calendar.get(Calendar.HOUR);
         int currentMiliseconds = calendar.get(Calendar.MILLISECOND);
+        //Validación inicial para darle la hora y el minuto correcto a las variables
+        if (horaAnterior == -1) {
+            horaAnterior = hora;
+            minutoAnterior = min;
+        }
 
 
         if (sec != Calendar.SECOND) {
@@ -155,51 +149,38 @@ public class Ventana extends JPanel implements Runnable {
             rotatedMinutos = rotateImage(puerroMinutos, (double) min * 360 / 60 + (double) (sec / 10));
             rotatedHoras = rotateImage(puerroHoras, (double) hora * 360 / 12 + (double) (min / 2));
         }
-                                        //166
-        if (currentMiliseconds > millis + 166) {
+
+        if (currentMiliseconds > millis + 16) {
             double fractionOfSecond = (double) currentMiliseconds / 1000.0;
             double secondsAngle = (double) sec * 360.0 / 60.0 + fractionOfSecond * 6.0; // 360° / 60 segundos = 6° por segundo
             rotatedSegundos = rotateImage(puerroSegundos, secondsAngle);
 
         }
 
-
-//        if(currentSecond >= prevMinChange + 10 || currentSecond == 59){
-//            System.out.println("Cambia minuto");
-//            if(currentSecond != 59){
-//                prevMinChange  = (currentSecond / 10) * 10;
-//            } else {
-//                prevMinChange = -10;
-//            }
-//
-//            rotatedMinutos = rotateImage(puerroMinutos, (double) (min * 360) /60+((double) prevMinChange /10));
-//        }
-//
-//        if(currentHour != hora){
-//            hora = currentHour;
-//        }
-//        if(currentMinute >= prevHourChange + 2 || currentMinute == 59){
-//            System.out.println("Cambia hora");
-//            if(currentMinute != 59){
-//                prevHourChange  = (currentMinute / 2) * 2;
-//            } else {
-//                prevHourChange = -5;
-//            }
-//
-//            rotatedHoras = rotateImage(puerroHoras, (double) (hora * 360) /12+((double) prevHourChange /2));
-//        }
+        //pintar los buffers
         g.drawImage(fondo, 0, 0, null);
-
         g.setClip(0, 0, getWidth(), getHeight());
-
-
-        //pintar el buffer
-
-
-        //pintar el ente movil
         g.drawImage(rotatedSegundos, 10, 80, null);
         g.drawImage(rotatedMinutos, 255, 267, null);
         g.drawImage(rotatedHoras, 350, 335, null);
+
+
+
+        //sonar cancion cada que cambia la hora
+        if (horaAnterior != hora) {
+            reproducirMusica("img/miku_by_anamanaguchi.wav");
+            horaAnterior = hora;
+        }
+
+
+        //Sonar cancion cada que cambia el minuto
+        if (minutoAnterior != min) {
+            reproducirMusica("img/miku_by_anamanaguchi.wav");
+            minutoAnterior = min;
+        }
+
+
+        //TODO implementar sonido cada que cambia el segundo
         if (sec % 2 == 0) {
             //tocar cancion donde es mi
 
@@ -208,6 +189,24 @@ public class Ventana extends JPanel implements Runnable {
 
         }
     }
+
+    private void reproducirMusica(String filePath) {
+        new Thread(() -> {
+            try {
+
+                AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(Ventana.class.getResource(filePath));
+                AudioFormat format = audioInputStream.getFormat();
+                DataLine.Info info = new DataLine.Info(Clip.class, format);
+                Clip clip = (Clip) AudioSystem.getLine(info);
+
+                clip.open(audioInputStream);
+                clip.start();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
 
     @Override
     public void run() {
